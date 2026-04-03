@@ -1,7 +1,9 @@
 package com.projects.expensetracker.transaction.controller;
 
 import com.projects.expensetracker.transaction.dto.TransactionCreateRequest;
+import com.projects.expensetracker.transaction.dto.TransactionFilterRequest;
 import com.projects.expensetracker.transaction.dto.TransactionResponse;
+import com.projects.expensetracker.transaction.dto.TransactionUpdateRequest;
 import com.projects.expensetracker.transaction.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,9 +32,20 @@ public class TransactionController {
         return transactionService.getTransactionsByUserId(userId);
     }
 
+    @GetMapping("/filter")
+    public List<TransactionResponse> filterTransactions(@ModelAttribute TransactionFilterRequest filter) {
+        return transactionService.filterTransactions(filter);
+    }
+
     @GetMapping("/{transactionId}")
     public TransactionResponse getTransactionById(@PathVariable Long transactionId) {
         return transactionService.getTransactionById(transactionId);
+    }
+
+    @PutMapping("/{transactionId}")
+    public TransactionResponse updateTransaction(@PathVariable Long transactionId,
+                                                 @Valid @RequestBody TransactionUpdateRequest request) {
+        return transactionService.updateTransaction(transactionId, request);
     }
 
     @DeleteMapping("/{transactionId}")
