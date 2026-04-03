@@ -25,10 +25,8 @@ CREATE TABLE financial_transaction (
                                        type VARCHAR(20) NOT NULL,
                                        description TEXT,
                                        date DATE NOT NULL,
-
                                        user_id BIGINT NOT NULL,
                                        category_id BIGINT NOT NULL,
-
                                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
                                        CONSTRAINT fk_transaction_user
