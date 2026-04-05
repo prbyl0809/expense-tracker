@@ -2,6 +2,7 @@ package com.projects.expensetracker.transaction.service;
 
 import com.projects.expensetracker.category.entity.Category;
 import com.projects.expensetracker.category.repository.CategoryRepository;
+import com.projects.expensetracker.common.dto.PagedResponse;
 import com.projects.expensetracker.exception.ResourceNotFoundException;
 import com.projects.expensetracker.security.AuthenticatedUserService;
 import com.projects.expensetracker.transaction.dto.TransactionCreateRequest;
@@ -12,10 +13,15 @@ import com.projects.expensetracker.transaction.entity.FinancialTransaction;
 import com.projects.expensetracker.transaction.repository.FinancialTransactionRepository;
 import com.projects.expensetracker.transaction.specification.FinancialTransactionSpecification;
 import com.projects.expensetracker.user.entity.AppUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -55,17 +61,17 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactions() {
+    public PagedResponse<TransactionResponse> getTransactions(Pageable pageable) {
         AppUser user = authenticatedUserService.getCurrentUser();
 
-        return financialTransactionRepository.findByUser(user)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        Page<TransactionResponse> page = financialTransactionRepository.findByUser(user, sanitizePageable(pageable))
+                .map(this::mapToResponse);
+
+        return PagedResponse.from(page);
     }
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> filterTransactions(TransactionFilterRequest filter) {
+    public PagedResponse<TransactionResponse> filterTransactions(TransactionFilterRequest filter, Pageable pageable) {
         if (filter.getFromDate() != null && filter.getToDate() != null
                 && filter.getFromDate().isAfter(filter.getToDate())) {
             throw new IllegalArgumentException("fromDate must be before or equal to toDate");
@@ -73,10 +79,13 @@ public class TransactionService {
 
         AppUser user = authenticatedUserService.getCurrentUser();
 
-        return financialTransactionRepository.findAll(FinancialTransactionSpecification.withFilters(user, filter))
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        Page<TransactionResponse> page = financialTransactionRepository.findAll(
+                        FinancialTransactionSpecification.withFilters(user, filter),
+                        sanitizePageable(pageable)
+                )
+                .map(this::mapToResponse);
+
+        return PagedResponse.from(page);
     }
 
     @Transactional(readOnly = true)
@@ -118,6 +127,36 @@ public class TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with id: " + transactionId));
 
         financialTransactionRepository.delete(transaction);
+    }
+
+    private Pageable sanitizePageable(Pageable pageable) {
+        if (pageable == null) {
+            return Pageable.unpaged();
+        }
+
+        Set<String> allowedSortProperties = Set.of("id", "amount", "type", "description", "date", "createdAt");
+        List<Sort.Order> orders = pageable.getSort().stream()
+                .filter(order -> allowedSortProperties.contains(order.getProperty()))
+                .toList();
+
+        LinkedHashSet<Sort.Order> finalOrders = new LinkedHashSet<>(orders);
+
+        boolean hasDateSort = finalOrders.stream().anyMatch(order -> order.getProperty().equals("date"));
+        boolean hasIdSort = finalOrders.stream().anyMatch(order -> order.getProperty().equals("id"));
+
+        if (!hasDateSort) {
+            finalOrders.add(Sort.Order.desc("date"));
+        }
+
+        if (!hasIdSort) {
+            finalOrders.add(Sort.Order.desc("id"));
+        }
+
+        return org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(finalOrders.stream().toList())
+        );
     }
 
     private void validateUserAndCategory(AppUser user, Category category, com.projects.expensetracker.transaction.entity.TransactionType transactionType) {

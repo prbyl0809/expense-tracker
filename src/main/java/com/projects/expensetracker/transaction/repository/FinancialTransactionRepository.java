@@ -1,9 +1,12 @@
 package com.projects.expensetracker.transaction.repository;
 
 import com.projects.expensetracker.dashboard.dto.CategorySummaryResponse;
+import com.projects.expensetracker.category.entity.Category;
 import com.projects.expensetracker.transaction.entity.FinancialTransaction;
 import com.projects.expensetracker.transaction.entity.TransactionType;
 import com.projects.expensetracker.user.entity.AppUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,11 +21,13 @@ public interface FinancialTransactionRepository
 
     List<FinancialTransaction> findByUser(AppUser user);
 
+    Page<FinancialTransaction> findByUser(AppUser user, Pageable pageable);
+
     List<FinancialTransaction> findByUserAndDateBetween(AppUser user, LocalDate startDate, LocalDate endDate);
 
     Optional<FinancialTransaction> findByIdAndUser(Long id, AppUser user);
 
-    boolean existsByCategory(com.projects.expensetracker.category.entity.Category category);
+    boolean existsByCategory(Category category);
 
     @Query("""
             select coalesce(sum(ft.amount), 0)

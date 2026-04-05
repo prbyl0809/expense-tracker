@@ -36,8 +36,6 @@ public class FinancialTransactionSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("category").get("id"), filter.getCategoryId()));
             }
 
-            query.orderBy(criteriaBuilder.desc(root.get("date")), criteriaBuilder.desc(root.get("id")));
-
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }

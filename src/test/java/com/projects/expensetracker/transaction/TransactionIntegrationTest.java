@@ -77,10 +77,11 @@ class TransactionIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/transactions")
                         .header("Authorization", "Bearer " + tokenFor(userA)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[?(@.id == %s)]", income.getId()).exists())
-                .andExpect(jsonPath("$[?(@.id == %s)]", expense.getId()).exists())
-                .andExpect(jsonPath("$[?(@.id == %s)]", foreignTransaction.getId()).isEmpty());
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[?(@.id == %s)]", income.getId()).exists())
+                .andExpect(jsonPath("$.content[?(@.id == %s)]", expense.getId()).exists())
+                .andExpect(jsonPath("$.content[?(@.id == %s)]", foreignTransaction.getId()).isEmpty());
 
         mockMvc.perform(get("/api/transactions/filter")
                         .header("Authorization", "Bearer " + tokenFor(userA))
@@ -88,12 +89,59 @@ class TransactionIntegrationTest extends AbstractIntegrationTest {
                         .param("toDate", "2026-04-05")
                         .param("type", "EXPENSE"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(expense.getId()));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(expense.getId()));
 
         mockMvc.perform(get("/api/transactions/{transactionId}", foreignTransaction.getId())
                         .header("Authorization", "Bearer " + tokenFor(userA)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void transactionListSupportsPaginationAndSorting() throws Exception {
+        AppUser user = createUser("tx-page@example.com", "secret123", "User");
+        Category category = createCategory(user, "Food", TransactionType.EXPENSE);
+
+        createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("30.00"), LocalDate.of(2026, 4, 5), "Third");
+        FinancialTransaction highestAmount = createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("90.00"), LocalDate.of(2026, 4, 4), "Highest");
+        createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("10.00"), LocalDate.of(2026, 4, 3), "Lowest");
+
+        mockMvc.perform(get("/api/transactions")
+                        .header("Authorization", "Bearer " + tokenFor(user))
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "amount,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(highestAmount.getId()))
+                .andExpect(jsonPath("$.content[0].amount").value(90.00));
+    }
+
+    @Test
+    void transactionFilterSupportsPagination() throws Exception {
+        AppUser user = createUser("tx-filter-page@example.com", "secret123", "User");
+        Category category = createCategory(user, "Food", TransactionType.EXPENSE);
+
+        createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("10.00"), LocalDate.of(2026, 4, 5), "A");
+        FinancialTransaction secondPageTransaction = createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("20.00"), LocalDate.of(2026, 4, 4), "B");
+        createTransaction(user, category, TransactionType.EXPENSE, new BigDecimal("30.00"), LocalDate.of(2026, 4, 3), "C");
+
+        mockMvc.perform(get("/api/transactions/filter")
+                        .header("Authorization", "Bearer " + tokenFor(user))
+                        .param("type", "EXPENSE")
+                        .param("page", "1")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(secondPageTransaction.getId()));
     }
 
     @Test
