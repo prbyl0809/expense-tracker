@@ -7,6 +7,7 @@ import com.projects.expensetracker.transaction.entity.TransactionType;
 import com.projects.expensetracker.transaction.repository.FinancialTransactionRepository;
 import com.projects.expensetracker.user.entity.AppUser;
 import com.projects.expensetracker.user.repository.AppUserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 public class TestDataController {
 
     private final AppUserRepository appUserRepository;
