@@ -22,6 +22,8 @@ public interface FinancialTransactionRepository
 
     Optional<FinancialTransaction> findByIdAndUser(Long id, AppUser user);
 
+    boolean existsByCategory(com.projects.expensetracker.category.entity.Category category);
+
     @Query("""
             select coalesce(sum(ft.amount), 0)
             from FinancialTransaction ft

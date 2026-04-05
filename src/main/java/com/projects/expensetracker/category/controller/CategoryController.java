@@ -2,6 +2,7 @@ package com.projects.expensetracker.category.controller;
 
 import com.projects.expensetracker.category.dto.CategoryCreateRequest;
 import com.projects.expensetracker.category.dto.CategoryResponse;
+import com.projects.expensetracker.category.dto.CategoryUpdateRequest;
 import com.projects.expensetracker.category.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,5 +29,17 @@ public class CategoryController {
     @GetMapping
     public List<CategoryResponse> getCategories() {
         return categoryService.getCategories();
+    }
+
+    @PutMapping("/{categoryId}")
+    public CategoryResponse updateCategory(@PathVariable Long categoryId,
+                                           @Valid @RequestBody CategoryUpdateRequest request) {
+        return categoryService.updateCategory(categoryId, request);
+    }
+
+    @DeleteMapping("/{categoryId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCategory(@PathVariable Long categoryId) {
+        categoryService.deleteCategory(categoryId);
     }
 }
