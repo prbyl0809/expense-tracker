@@ -6,7 +6,6 @@ import com.projects.expensetracker.dashboard.service.DashboardService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,7 +24,7 @@ public class DashboardController {
     }
 
     @GetMapping("/summary/current-month")
-    public DashboardSummaryResponse getCurrentMonthSummary(@RequestParam Long userId) {
-        return dashboardService.getCurrentMonthSummary(userId);
+    public DashboardSummaryResponse getCurrentMonthSummary() {
+        return dashboardService.getCurrentMonthSummary();
     }
 }

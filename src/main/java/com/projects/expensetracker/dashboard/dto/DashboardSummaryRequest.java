@@ -6,8 +6,6 @@ import java.time.LocalDate;
 
 public class DashboardSummaryRequest {
 
-    private Long userId;
-
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fromDate;
 
@@ -17,20 +15,12 @@ public class DashboardSummaryRequest {
     public DashboardSummaryRequest() {
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
     public LocalDate getFromDate() {
         return fromDate;
     }
 
     public LocalDate getToDate() {
         return toDate;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public void setFromDate(LocalDate fromDate) {

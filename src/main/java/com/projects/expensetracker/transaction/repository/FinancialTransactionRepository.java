@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface FinancialTransactionRepository
         extends JpaRepository<FinancialTransaction, Long>, JpaSpecificationExecutor<FinancialTransaction> {
@@ -19,25 +20,27 @@ public interface FinancialTransactionRepository
 
     List<FinancialTransaction> findByUserAndDateBetween(AppUser user, LocalDate startDate, LocalDate endDate);
 
+    Optional<FinancialTransaction> findByIdAndUser(Long id, AppUser user);
+
     @Query("""
             select coalesce(sum(ft.amount), 0)
             from FinancialTransaction ft
-            where ft.user.id = :userId
+            where ft.user = :user
               and ft.type = :type
               and ft.date between :fromDate and :toDate
             """)
-    BigDecimal sumAmountByUserIdAndTypeAndDateBetween(Long userId,
-                                                      TransactionType type,
-                                                      LocalDate fromDate,
-                                                      LocalDate toDate);
+    BigDecimal sumAmountByUserAndTypeAndDateBetween(AppUser user,
+                                                    TransactionType type,
+                                                    LocalDate fromDate,
+                                                    LocalDate toDate);
 
     @Query("""
             select count(ft)
             from FinancialTransaction ft
-            where ft.user.id = :userId
+            where ft.user = :user
               and ft.date between :fromDate and :toDate
             """)
-    Long countByUserIdAndDateBetween(Long userId, LocalDate fromDate, LocalDate toDate);
+    Long countByUserAndDateBetween(AppUser user, LocalDate fromDate, LocalDate toDate);
 
     @Query("""
         select new com.projects.expensetracker.dashboard.dto.CategorySummaryResponse(
@@ -48,10 +51,10 @@ public interface FinancialTransactionRepository
             count(ft)
         )
         from FinancialTransaction ft
-        where ft.user.id = :userId
+        where ft.user = :user
           and ft.date between :fromDate and :toDate
         group by ft.category.id, ft.category.name, ft.category.type
         order by coalesce(sum(ft.amount), 0E0) desc
         """)
-    List<CategorySummaryResponse> getCategorySummaries(Long userId, LocalDate fromDate, LocalDate toDate);
+    List<CategorySummaryResponse> getCategorySummaries(AppUser user, LocalDate fromDate, LocalDate toDate);
 }

@@ -28,8 +28,8 @@ public class TransactionController {
     }
 
     @GetMapping
-    public List<TransactionResponse> getTransactionsByUserId(@RequestParam Long userId) {
-        return transactionService.getTransactionsByUserId(userId);
+    public List<TransactionResponse> getTransactions() {
+        return transactionService.getTransactions();
     }
 
     @GetMapping("/filter")

@@ -23,9 +23,6 @@ public class TransactionCreateRequest {
     @NotNull(message = "Transaction date is required")
     private LocalDate date;
 
-    @NotNull(message = "User id is required")
-    private Long userId;
-
     @NotNull(message = "Category id is required")
     private Long categoryId;
 
@@ -48,10 +45,6 @@ public class TransactionCreateRequest {
         return date;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
     public Long getCategoryId() {
         return categoryId;
     }
@@ -70,10 +63,6 @@ public class TransactionCreateRequest {
 
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public void setCategoryId(Long categoryId) {

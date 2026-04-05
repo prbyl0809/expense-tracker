@@ -7,8 +7,6 @@ import java.time.LocalDate;
 
 public class TransactionFilterRequest {
 
-    private Long userId;
-
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fromDate;
 
@@ -20,10 +18,6 @@ public class TransactionFilterRequest {
     private Long categoryId;
 
     public TransactionFilterRequest() {
-    }
-
-    public Long getUserId() {
-        return userId;
     }
 
     public LocalDate getFromDate() {
@@ -40,10 +34,6 @@ public class TransactionFilterRequest {
 
     public Long getCategoryId() {
         return categoryId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public void setFromDate(LocalDate fromDate) {

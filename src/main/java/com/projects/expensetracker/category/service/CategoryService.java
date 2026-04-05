@@ -4,9 +4,8 @@ import com.projects.expensetracker.category.dto.CategoryCreateRequest;
 import com.projects.expensetracker.category.dto.CategoryResponse;
 import com.projects.expensetracker.category.entity.Category;
 import com.projects.expensetracker.category.repository.CategoryRepository;
-import com.projects.expensetracker.exception.ResourceNotFoundException;
+import com.projects.expensetracker.security.AuthenticatedUserService;
 import com.projects.expensetracker.user.entity.AppUser;
-import com.projects.expensetracker.user.repository.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,16 +16,16 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final AppUserRepository appUserRepository;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    public CategoryService(CategoryRepository categoryRepository, AppUserRepository appUserRepository) {
+    public CategoryService(CategoryRepository categoryRepository,
+                           AuthenticatedUserService authenticatedUserService) {
         this.categoryRepository = categoryRepository;
-        this.appUserRepository = appUserRepository;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     public CategoryResponse createCategory(CategoryCreateRequest request) {
-        AppUser user = appUserRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
+        AppUser user = authenticatedUserService.getCurrentUser();
 
         Category category = new Category();
         category.setName(request.getName());
@@ -39,9 +38,8 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getCategoriesByUserId(Long userId) {
-        AppUser user = appUserRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+    public List<CategoryResponse> getCategories() {
+        AppUser user = authenticatedUserService.getCurrentUser();
 
         return categoryRepository.findByUser(user)
                 .stream()

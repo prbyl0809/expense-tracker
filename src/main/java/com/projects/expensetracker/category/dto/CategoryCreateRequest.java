@@ -14,9 +14,6 @@ public class CategoryCreateRequest {
     @NotNull(message = "Category type is required")
     private TransactionType type;
 
-    @NotNull(message = "User id is required")
-    private Long userId;
-
     public CategoryCreateRequest() {
     }
 
@@ -28,19 +25,11 @@ public class CategoryCreateRequest {
         return type;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     public void setType(TransactionType type) {
         this.type = type;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 }

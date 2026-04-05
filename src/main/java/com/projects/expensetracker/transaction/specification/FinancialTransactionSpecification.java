@@ -2,6 +2,7 @@ package com.projects.expensetracker.transaction.specification;
 
 import com.projects.expensetracker.transaction.dto.TransactionFilterRequest;
 import com.projects.expensetracker.transaction.entity.FinancialTransaction;
+import com.projects.expensetracker.user.entity.AppUser;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -13,13 +14,11 @@ public class FinancialTransactionSpecification {
     private FinancialTransactionSpecification() {
     }
 
-    public static Specification<FinancialTransaction> withFilters(TransactionFilterRequest filter) {
+    public static Specification<FinancialTransaction> withFilters(AppUser user, TransactionFilterRequest filter) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (filter.getUserId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("user").get("id"), filter.getUserId()));
-            }
+            predicates.add(criteriaBuilder.equal(root.get("user"), user));
 
             if (filter.getFromDate() != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("date"), filter.getFromDate()));

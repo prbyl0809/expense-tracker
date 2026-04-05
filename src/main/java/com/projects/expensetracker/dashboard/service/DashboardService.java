@@ -3,10 +3,10 @@ package com.projects.expensetracker.dashboard.service;
 import com.projects.expensetracker.dashboard.dto.CategorySummaryResponse;
 import com.projects.expensetracker.dashboard.dto.DashboardSummaryRequest;
 import com.projects.expensetracker.dashboard.dto.DashboardSummaryResponse;
-import com.projects.expensetracker.exception.ResourceNotFoundException;
+import com.projects.expensetracker.security.AuthenticatedUserService;
 import com.projects.expensetracker.transaction.entity.TransactionType;
 import com.projects.expensetracker.transaction.repository.FinancialTransactionRepository;
-import com.projects.expensetracker.user.repository.AppUserRepository;
+import com.projects.expensetracker.user.entity.AppUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,19 +19,15 @@ import java.util.List;
 public class DashboardService {
 
     private final FinancialTransactionRepository financialTransactionRepository;
-    private final AppUserRepository appUserRepository;
+    private final AuthenticatedUserService authenticatedUserService;
 
     public DashboardService(FinancialTransactionRepository financialTransactionRepository,
-                            AppUserRepository appUserRepository) {
+                            AuthenticatedUserService authenticatedUserService) {
         this.financialTransactionRepository = financialTransactionRepository;
-        this.appUserRepository = appUserRepository;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     public DashboardSummaryResponse getSummary(DashboardSummaryRequest request) {
-        if (request.getUserId() == null) {
-            throw new IllegalArgumentException("User id is required");
-        }
-
         if (request.getFromDate() == null || request.getToDate() == null) {
             throw new IllegalArgumentException("fromDate and toDate are required");
         }
@@ -40,31 +36,30 @@ public class DashboardService {
             throw new IllegalArgumentException("fromDate must be before or equal to toDate");
         }
 
-        appUserRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
+        AppUser user = authenticatedUserService.getCurrentUser();
 
-        BigDecimal totalIncome = financialTransactionRepository.sumAmountByUserIdAndTypeAndDateBetween(
-                request.getUserId(),
+        BigDecimal totalIncome = financialTransactionRepository.sumAmountByUserAndTypeAndDateBetween(
+                user,
                 TransactionType.INCOME,
                 request.getFromDate(),
                 request.getToDate()
         );
 
-        BigDecimal totalExpense = financialTransactionRepository.sumAmountByUserIdAndTypeAndDateBetween(
-                request.getUserId(),
+        BigDecimal totalExpense = financialTransactionRepository.sumAmountByUserAndTypeAndDateBetween(
+                user,
                 TransactionType.EXPENSE,
                 request.getFromDate(),
                 request.getToDate()
         );
 
-        Long transactionCount = financialTransactionRepository.countByUserIdAndDateBetween(
-                request.getUserId(),
+        Long transactionCount = financialTransactionRepository.countByUserAndDateBetween(
+                user,
                 request.getFromDate(),
                 request.getToDate()
         );
 
         List<CategorySummaryResponse> categorySummaries = financialTransactionRepository.getCategorySummaries(
-                request.getUserId(),
+                user,
                 request.getFromDate(),
                 request.getToDate()
         );
@@ -72,7 +67,7 @@ public class DashboardService {
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
         return new DashboardSummaryResponse(
-                request.getUserId(),
+                user.getId(),
                 request.getFromDate(),
                 request.getToDate(),
                 totalIncome,
@@ -83,13 +78,12 @@ public class DashboardService {
         );
     }
 
-    public DashboardSummaryResponse getCurrentMonthSummary(Long userId) {
+    public DashboardSummaryResponse getCurrentMonthSummary() {
         LocalDate now = LocalDate.now();
         LocalDate firstDayOfMonth = now.withDayOfMonth(1);
         LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
 
         DashboardSummaryRequest request = new DashboardSummaryRequest();
-        request.setUserId(userId);
         request.setFromDate(firstDayOfMonth);
         request.setToDate(lastDayOfMonth);
 

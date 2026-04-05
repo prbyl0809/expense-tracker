@@ -6,8 +6,10 @@ import com.projects.expensetracker.user.entity.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByUser(AppUser user);
     List<Category> findByUserAndType(AppUser user, TransactionType type);
+    Optional<Category> findByIdAndUser(Long id, AppUser user);
 }

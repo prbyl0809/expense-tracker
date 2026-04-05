@@ -26,7 +26,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public List<CategoryResponse> getCategoriesByUserId(@RequestParam Long userId) {
-        return categoryService.getCategoriesByUserId(userId);
+    public List<CategoryResponse> getCategories() {
+        return categoryService.getCategories();
     }
 }
