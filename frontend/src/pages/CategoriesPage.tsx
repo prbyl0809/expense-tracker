@@ -1,93 +1,56 @@
-import { FormEvent, useMemo, useState } from "react";
-import SaveRounded from "@mui/icons-material/SaveRounded";
-import {
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { useState } from "react";
+import AddRounded from "@mui/icons-material/AddRounded";
+import { Button, Stack, Typography } from "@mui/material";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { useSnackbar } from "@/components/feedback/SnackbarProvider";
+import { CategoryEditorDialog } from "@/features/categories/components/CategoryEditorDialog";
 import { CategoryList } from "@/features/categories/components/CategoryList";
 import { useCategories, useCategoryMutations } from "@/hooks/useCategories";
 import { ApiError } from "@/lib/apiClient";
-import { Category, TransactionType } from "@/types/api";
-
-const initialFormState = {
-  name: "",
-  type: "EXPENSE" as TransactionType,
-};
+import { Category, CategoryPayload } from "@/types/api";
 
 export function CategoriesPage() {
   const categoriesQuery = useCategories();
   const { createCategory, updateCategory, deleteCategory } = useCategoryMutations();
   const { showSnackbar } = useSnackbar();
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formState, setFormState] = useState(initialFormState);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const submitLabel = editingCategory ? "Save changes" : "Create category";
 
   const isSubmitting = createCategory.isPending || updateCategory.isPending;
 
-  const titleCopy = useMemo(
-    () =>
-      editingCategory
-        ? {
-            title: "Edit category",
-            description: "Update the label or type without exposing any user id in the UI.",
-          }
-        : {
-            title: "Create category",
-            description: "This writes directly to the authenticated user's category set.",
-          },
-    [editingCategory],
-  );
-
-  const resetForm = () => {
-    setEditingCategory(null);
-    setFormState(initialFormState);
-    setErrorMessage(null);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrorMessage(null);
-
-    try {
-      if (editingCategory) {
-        await updateCategory.mutateAsync({
-          categoryId: editingCategory.id,
-          payload: formState,
-        });
-      } else {
-        await createCategory.mutateAsync(formState);
-      }
-
-      resetForm();
-    } catch (error) {
-      setErrorMessage(error instanceof ApiError ? error.message : "Saving category failed.");
+  const handleSubmit = async (payload: CategoryPayload, categoryId?: number) => {
+    if (categoryId) {
+      await updateCategory.mutateAsync({
+        categoryId,
+        payload,
+      });
+      setEditingCategory(null);
+      setIsEditorOpen(false);
+      return;
     }
+
+    await createCategory.mutateAsync(payload);
+    setIsEditorOpen(false);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormState({
-      name: category.name,
-      type: category.type,
-    });
-    setErrorMessage(null);
+    setIsEditorOpen(true);
   };
 
   const handleDelete = async (categoryId: number) => {
+    const category = (categoriesQuery.data ?? []).find((item) => item.id === categoryId);
+    const confirmed = window.confirm(`Delete "${category?.name ?? "this category"}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await deleteCategory.mutateAsync(categoryId);
       if (editingCategory?.id === categoryId) {
-        resetForm();
+        setEditingCategory(null);
+        setIsEditorOpen(false);
       }
     } catch (error) {
       showSnackbar(
@@ -108,79 +71,47 @@ export function CategoriesPage() {
   }
 
   return (
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, xl: 7 }}>
-        <Stack spacing={2}>
-          <Typography variant="h5">Your category set</Typography>
-          <CategoryList
-            categories={categoriesQuery.data ?? []}
-            isDeleting={deleteCategory.isPending}
-            isLoading={categoriesQuery.isLoading}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
-        </Stack>
-      </Grid>
+    <Stack spacing={3}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={2}
+      >
+        <Typography color="text.secondary">
+          Build and maintain your income and expense taxonomy here. Add new categories
+          or update existing ones without leaving the list context.
+        </Typography>
+        <Button
+          startIcon={<AddRounded />}
+          variant="contained"
+          onClick={() => {
+            setEditingCategory(null);
+            setIsEditorOpen(true);
+          }}
+        >
+          Add category
+        </Button>
+      </Stack>
 
-      <Grid size={{ xs: 12, xl: 5 }}>
-        <Card>
-          <CardContent>
-            <Stack spacing={3} component="form" onSubmit={handleSubmit}>
-              <div>
-                <Typography variant="h5">{titleCopy.title}</Typography>
-                <Typography color="text.secondary" sx={{ mt: 1 }}>
-                  {titleCopy.description}
-                </Typography>
-              </div>
+      <CategoryEditorDialog
+        isSubmitting={isSubmitting}
+        open={isEditorOpen}
+        category={editingCategory}
+        onCancel={() => {
+          setEditingCategory(null);
+          setIsEditorOpen(false);
+        }}
+        onSubmit={handleSubmit}
+      />
 
-              {errorMessage ? (
-                <Typography color="error.main" variant="body2">
-                  {errorMessage}
-                </Typography>
-              ) : null}
-
-              <TextField
-                required
-                label="Category name"
-                value={formState.name}
-                onChange={(event) =>
-                  setFormState((current) => ({ ...current, name: event.target.value }))
-                }
-              />
-
-              <TextField
-                select
-                required
-                label="Type"
-                value={formState.type}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    type: event.target.value as TransactionType,
-                  }))
-                }
-              >
-                <MenuItem value="EXPENSE">Expense</MenuItem>
-                <MenuItem value="INCOME">Income</MenuItem>
-              </TextField>
-
-              <Stack direction="row" spacing={1.5}>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  startIcon={<SaveRounded />}
-                  variant="contained"
-                >
-                  {submitLabel}
-                </Button>
-                <Button variant="text" onClick={resetForm}>
-                  Clear
-                </Button>
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
+      <CategoryList
+        categories={categoriesQuery.data ?? []}
+        isDeleting={deleteCategory.isPending}
+        isLoading={categoriesQuery.isLoading}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
+      />
+    </Stack>
   );
 }

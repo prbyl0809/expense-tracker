@@ -67,6 +67,14 @@ export interface CategoryPayload {
   type: TransactionType;
 }
 
+export interface TransactionPayload {
+  amount: number;
+  type: TransactionType;
+  description: string;
+  date: string;
+  categoryId: number;
+}
+
 export interface TransactionFilters {
   page?: number;
   size?: number;
