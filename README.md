@@ -38,7 +38,8 @@ Detailed project status and next-step planning lives in [docs/project-status-and
 - Flyway database migrations on startup
 - local seed endpoint for sample data
 - health and Swagger endpoints
-- frontend app shell with JWT auth flow, theme toggle, dashboard, transactions, categories, and settings pages
+- frontend app with JWT auth flow, theme toggle, dashboard, transactions, categories, and settings pages
+- GitHub Actions workflows for backend tests and frontend build
 
 ## Current API Model
 
@@ -284,14 +285,18 @@ GET /api/transactions?page=0&size=10&sort=amount,desc
 
 ## Frontend Scope
 
-The current frontend scaffold includes:
+The current frontend includes:
 
 - auth pages for login and registration
 - protected app shell with responsive sidebar and top bar
 - persisted light and dark theme toggle
 - dashboard page wired to the current-month summary endpoint
 - transaction list page wired to backend pagination and filters
+- transaction create and edit via modal dialog
+- transaction delete with shared confirmation dialog
 - category management page wired to category CRUD
+- category create and edit via modal dialog
+- category delete with shared confirmation dialog
 - settings page for theme and session controls
 
 Current routes:
@@ -307,41 +312,37 @@ Current routes:
 
 The most pragmatic order from the current state is:
 
-1. finish the core frontend transaction flow
-2. add CI with GitHub Actions
-3. containerize the backend and optionally the frontend
-4. tighten deployment and production configuration
+1. polish the remaining frontend UX and dashboard widgets
+2. containerize the backend and optionally the frontend
+3. tighten deployment and production configuration
 
-### 1. Frontend Features First
+### 1. Frontend UX And Dashboard Polish
 
 Recommended next implementation targets:
 
-- transaction create form
-- transaction edit form
-- transaction delete action
-- transaction detail or inline edit UX
 - dashboard polish using real widgets and better empty/loading states
-- category UX refinements if needed
+- category and transaction UX refinements if needed
+- route-level code splitting to reduce the large frontend bundle
 
 Why this should come first:
 
 - the backend API is already strong enough to support these flows
 - this is the shortest path to a usable full product
-- CI and containerization are more valuable once the main user flow is in place
+- the main create/edit/delete transaction flow is already in place
 
-### 2. GitHub Actions After Core UI Flows
+### 2. GitHub Actions Baseline
 
-What you likely need first:
+The repository now includes:
 
 - backend workflow: checkout, set up JDK 21, cache Maven, run `mvn test`
 - frontend workflow: set up Node 20, cache npm, run `npm ci`, run `npm run build`
-- triggers on push and pull request
+- triggers on push and pull request for `dev` and `main`
 
 Nice additions later:
 
-- separate jobs for backend and frontend
 - required status checks on the main branch
 - formatting or lint checks when you introduce ESLint/Prettier
+- deploy workflows once hosting is chosen
 
 Important note:
 
@@ -460,6 +461,6 @@ Automated integration tests also cover:
 - JPA schema generation is set to `validate`, so the database schema must match the Flyway migrations.
 - The test suite runs against H2 in PostgreSQL compatibility mode with Flyway migrations enabled.
 - The backend API now includes category CRUD and paginated transaction list/filter endpoints.
-- The frontend scaffold is now in place and the next major work items are transaction create/edit/delete flows, dashboard polish, and API contract cleanup decisions.
-- GitHub Actions should validate backend tests and frontend build before merge.
+- The frontend app is now in place and includes category CRUD plus transaction create/edit/delete flows.
+- GitHub Actions now validate backend tests and frontend build on `dev` and `main`.
 - Backend containerization is worth doing before deployment work; frontend containerization is optional until you need unified compose startup or container hosting.
