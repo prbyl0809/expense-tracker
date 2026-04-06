@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AddRounded from "@mui/icons-material/AddRounded";
 import { Button, Stack, Typography } from "@mui/material";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { useSnackbar } from "@/components/feedback/SnackbarProvider";
 import { CategoryEditorDialog } from "@/features/categories/components/CategoryEditorDialog";
@@ -15,6 +16,7 @@ export function CategoriesPage() {
   const { showSnackbar } = useSnackbar();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryPendingDelete, setCategoryPendingDelete] = useState<Category | null>(null);
 
   const isSubmitting = createCategory.isPending || updateCategory.isPending;
 
@@ -38,20 +40,17 @@ export function CategoriesPage() {
     setIsEditorOpen(true);
   };
 
-  const handleDelete = async (categoryId: number) => {
-    const category = (categoriesQuery.data ?? []).find((item) => item.id === categoryId);
-    const confirmed = window.confirm(`Delete "${category?.name ?? "this category"}"?`);
-
-    if (!confirmed) {
+  const handleDeleteConfirm = async () => {
+    if (!categoryPendingDelete) {
       return;
     }
-
     try {
-      await deleteCategory.mutateAsync(categoryId);
-      if (editingCategory?.id === categoryId) {
+      await deleteCategory.mutateAsync(categoryPendingDelete.id);
+      if (editingCategory?.id === categoryPendingDelete.id) {
         setEditingCategory(null);
         setIsEditorOpen(false);
       }
+      setCategoryPendingDelete(null);
     } catch (error) {
       showSnackbar(
         error instanceof ApiError ? error.message : "Deleting category failed.",
@@ -105,11 +104,26 @@ export function CategoriesPage() {
         onSubmit={handleSubmit}
       />
 
+      <ConfirmDialog
+        confirmLabel="Delete category"
+        description={`This will permanently remove "${categoryPendingDelete?.name ?? "this category"}".`}
+        isSubmitting={deleteCategory.isPending}
+        open={Boolean(categoryPendingDelete)}
+        title="Delete category?"
+        onCancel={() => setCategoryPendingDelete(null)}
+        onConfirm={handleDeleteConfirm}
+      />
+
       <CategoryList
         categories={categoriesQuery.data ?? []}
         isDeleting={deleteCategory.isPending}
         isLoading={categoriesQuery.isLoading}
-        onDelete={handleDelete}
+        onDelete={(categoryId) => {
+          const category = (categoriesQuery.data ?? []).find((item) => item.id === categoryId);
+          if (category) {
+            setCategoryPendingDelete(category);
+          }
+        }}
         onEdit={handleEdit}
       />
     </Stack>

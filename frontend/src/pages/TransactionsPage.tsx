@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AddRounded from "@mui/icons-material/AddRounded";
 import { Button, Stack, Typography } from "@mui/material";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { useSnackbar } from "@/components/feedback/SnackbarProvider";
 import { TransactionEditorCard } from "@/features/transactions/components/TransactionEditorCard";
@@ -29,6 +30,9 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState<TransactionFiltersType>(defaultFilters);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [transactionPendingDelete, setTransactionPendingDelete] = useState<Transaction | null>(
+    null,
+  );
   const categoriesQuery = useCategories();
   const transactionsQuery = useTransactions(filters);
   const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
@@ -51,22 +55,18 @@ export function TransactionsPage() {
     setIsEditorOpen(false);
   };
 
-  const handleDelete = async (transaction: Transaction) => {
-    const confirmed = window.confirm(
-      `Delete "${transaction.description || transaction.categoryName}"?`,
-    );
-
-    if (!confirmed) {
+  const handleDeleteConfirm = async () => {
+    if (!transactionPendingDelete) {
       return;
     }
-
     try {
-      await deleteTransaction.mutateAsync(transaction.id);
+      await deleteTransaction.mutateAsync(transactionPendingDelete.id);
 
-      if (editingTransaction?.id === transaction.id) {
+      if (editingTransaction?.id === transactionPendingDelete.id) {
         setEditingTransaction(null);
         setIsEditorOpen(false);
       }
+      setTransactionPendingDelete(null);
     } catch (error) {
       showSnackbar(
         error instanceof ApiError ? error.message : "Deleting transaction failed.",
@@ -128,12 +128,22 @@ export function TransactionsPage() {
         onSubmit={handleSubmit}
       />
 
+      <ConfirmDialog
+        confirmLabel="Delete transaction"
+        description={`This will permanently remove "${transactionPendingDelete?.description || transactionPendingDelete?.categoryName || "this transaction"}".`}
+        isSubmitting={deleteTransaction.isPending}
+        open={Boolean(transactionPendingDelete)}
+        title="Delete transaction?"
+        onCancel={() => setTransactionPendingDelete(null)}
+        onConfirm={handleDeleteConfirm}
+      />
+
       <TransactionListCard
         isDeleting={deleteTransaction.isPending}
         isFetching={transactionsQuery.isFetching}
         isLoading={transactionsQuery.isLoading && !transactionsQuery.data}
         transactions={transactionsQuery.data}
-        onDelete={handleDelete}
+        onDelete={setTransactionPendingDelete}
         onEdit={(transaction) => {
           setEditingTransaction(transaction);
           setIsEditorOpen(true);
