@@ -181,17 +181,35 @@ Why this matters:
 
 Completed:
 
-- Vite + React + TypeScript frontend scaffold under `frontend/`
+- Vite + React + TypeScript frontend app under `frontend/`
 - MUI-based theme system with light/dark mode support
 - protected route model with JWT-backed auth bootstrap
-- dashboard, transactions, categories, settings, login, and register page shells
+- dashboard, transactions, categories, settings, login, and register pages
 - authenticated API client and React Query foundation
+- transaction create/edit/delete flows
+- category create/edit/delete flows
 
 Why this matters:
 
 - the backend is now consumable through a real UI shell
 - the next frontend iterations can focus on user flows instead of project setup
 - theme, routing, and auth decisions are no longer open questions
+
+### Milestone F: CI Baseline
+
+Completed:
+
+- separate GitHub Actions workflows for backend and frontend
+- backend CI running `mvn test`
+- frontend CI running `npm ci` and `npm run build`
+- Maven and npm dependency caching
+- workflow triggers on pull requests targeting `main`
+
+Why this matters:
+
+- broken changes are caught before merge
+- `main` branch protection can rely on real status checks
+- the project now has a repeatable baseline validation path
 
 ## 4. Verified Working Behavior
 
@@ -235,12 +253,12 @@ These are the main gaps that still separate the project from a stronger producti
 Current gap:
 
 - response DTO cleanup is not decided yet
-- transaction create/edit UX is not implemented in the frontend yet
 - dashboard widgets can still be expanded and refined
+- route-level code splitting is not implemented yet
 
 Impact:
 
-- frontend integration will need these soon
+- frontend polish and bundle size still need attention
 - list endpoints can become inefficient as data grows
 
 ### 5.2 Security Hardening Gap
@@ -262,7 +280,6 @@ Current gap:
 - no environment profile strategy beyond local defaults
 - no deployment notes
 - no containerized backend app runtime
-- no CI pipeline
 
 Impact:
 
@@ -342,8 +359,8 @@ Acceptance criteria:
 Current status:
 
 - in progress
-- scaffold, auth shell, dashboard, category management, and transaction listing are implemented
-- next target should be transaction create/edit/delete UX
+- auth shell, dashboard, category management, and transaction create/edit/delete flows are implemented
+- next target should be dashboard polish, empty/loading states, and bundle optimization
 
 ## Phase 4: CI Foundation
 
@@ -366,6 +383,10 @@ Acceptance criteria:
 - backend workflow runs `mvn test`
 - frontend workflow runs `npm ci` and `npm run build`
 - pull requests show clear status checks
+
+Current status:
+
+- completed
 
 ## Phase 5: Containerization And Deployment Baseline
 
@@ -426,15 +447,11 @@ Expected outcome:
 
 If the goal is steady progress with minimal rework, the recommended implementation order is:
 
-1. Add backend integration tests for auth and ownership.
-2. Move sensitive JWT configuration to environment variables.
-3. Implement category update/delete.
-4. Add pagination and sorting to transaction endpoints.
-5. Scaffold the React frontend and wire login/register.
-6. Implement transaction create/edit/delete flows in the frontend.
-7. Add GitHub Actions for backend tests and frontend build.
-8. Add backend containerization and decide whether frontend containerization is justified.
-9. Refine dashboard widgets and response cleanup details needed by the frontend.
+1. Refine dashboard widgets, empty/loading states, and bundle size in the frontend.
+2. Review response DTO cleanup decisions needed by the frontend.
+3. Add backend containerization and decide whether frontend containerization is justified.
+4. Document runtime environment variables and deployment assumptions.
+5. Revisit production hardening items such as refresh tokens and environment-specific configuration.
 
 ## 8. Decision Notes
 
@@ -460,4 +477,4 @@ The backend has already passed the most important architectural threshold:
 - multi-user isolation works
 - business endpoints no longer trust client-supplied `userId`
 
-The backend is now stable enough to support UI work, and the frontend scaffold is in place. The next valuable move is to finish the main frontend transaction flow, then add CI, then containerize the runtime where it adds real value.
+The backend is now stable enough to support UI work, the frontend core flows are in place, and CI is running as a baseline quality gate. The next valuable move is to polish the remaining frontend experience, then containerize the runtime where it adds real value.
