@@ -336,7 +336,7 @@ The repository now includes:
 
 - backend workflow: checkout, set up JDK 21, cache Maven, run `mvn test`
 - frontend workflow: set up Node 20, cache npm, run `npm ci`, run `npm run build`
-- triggers on push and pull request for `dev` and `main`
+- pull request triggers for changes targeting `main`
 
 Nice additions later:
 
@@ -462,5 +462,5 @@ Automated integration tests also cover:
 - The test suite runs against H2 in PostgreSQL compatibility mode with Flyway migrations enabled.
 - The backend API now includes category CRUD and paginated transaction list/filter endpoints.
 - The frontend app is now in place and includes category CRUD plus transaction create/edit/delete flows.
-- GitHub Actions now validate backend tests and frontend build on `dev` and `main`.
+- GitHub Actions now validate backend tests and frontend build on pull requests targeting `main`.
 - Backend containerization is worth doing before deployment work; frontend containerization is optional until you need unified compose startup or container hosting.

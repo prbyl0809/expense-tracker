@@ -203,7 +203,7 @@ Completed:
 - backend CI running `mvn test`
 - frontend CI running `npm ci` and `npm run build`
 - Maven and npm dependency caching
-- workflow triggers on push and pull request for `dev` and `main`
+- workflow triggers on pull requests targeting `main`
 
 Why this matters:
 
