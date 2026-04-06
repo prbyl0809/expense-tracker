@@ -1,6 +1,6 @@
 # Expense Tracker Project Status And Roadmap
 
-Last updated: 2026-04-05
+Last updated: 2026-04-06
 
 ## 1. Project Goal
 
@@ -10,7 +10,7 @@ The goal of the project is to build a modern fullstack expense tracker applicati
 - PostgreSQL database
 - JWT-based authentication
 - multi-user data isolation
-- later a React frontend
+- a React frontend
 
 The target is not a demo-only API. The backend is already moving toward a production-style model where business data is always scoped to the authenticated user.
 
@@ -60,6 +60,7 @@ Implemented:
 - custom JWT filter
 - current authenticated user lookup through `AuthenticatedUserService`
 - `/api/users/me` endpoint for current user inspection
+- configurable CORS for frontend origins
 - JWT secret loaded from environment configuration
 - seed endpoint disabled by default unless explicitly enabled
 
@@ -86,11 +87,14 @@ Implemented:
 
 - create category
 - list categories for current authenticated user
+- update category
+- delete category
 
 Status:
 
 - category data is now bound to the logged-in user
 - request payload no longer requires `userId`
+- delete is blocked when transactions still reference the category
 
 #### Transactions
 
@@ -102,6 +106,8 @@ Implemented:
 - get transaction by id
 - update transaction
 - delete transaction
+- pagination for list and filter endpoints
+- sorting for list and filter endpoints
 
 Status:
 
@@ -109,6 +115,7 @@ Status:
 - cross-user access is blocked
 - request payload no longer requires `userId`
 - filters are applied inside the authenticated user boundary
+- paginated responses now have a stable DTO shape
 
 #### Dashboard
 
@@ -170,6 +177,22 @@ Why this matters:
 - business endpoints now follow the authenticated session boundary
 - this is the main step that moves the backend toward production-style behavior
 
+### Milestone E: Frontend Foundation
+
+Completed:
+
+- Vite + React + TypeScript frontend scaffold under `frontend/`
+- MUI-based theme system with light/dark mode support
+- protected route model with JWT-backed auth bootstrap
+- dashboard, transactions, categories, settings, login, and register page shells
+- authenticated API client and React Query foundation
+
+Why this matters:
+
+- the backend is now consumable through a real UI shell
+- the next frontend iterations can focus on user flows instead of project setup
+- theme, routing, and auth decisions are no longer open questions
+
 ## 4. Verified Working Behavior
 
 Manual API verification was run on 2026-04-05 against a live local application.
@@ -197,8 +220,10 @@ Covered by integration tests:
 
 - auth register/login
 - unauthorized access handling
+- CORS preflight
 - category ownership
 - transaction ownership and cross-user protection
+- transaction pagination and sorting
 - dashboard summary aggregation
 
 ## 5. Known Gaps
@@ -209,9 +234,9 @@ These are the main gaps that still separate the project from a stronger producti
 
 Current gap:
 
-- category update/delete endpoints are missing
-- category CRUD is not complete yet
-- transaction pagination and sorting are not implemented
+- response DTO cleanup is not decided yet
+- transaction create/edit UX is not implemented in the frontend yet
+- dashboard widgets can still be expanded and refined
 
 Impact:
 
@@ -224,7 +249,6 @@ Current gap:
 
 - there is no refresh token flow
 - no role model exists yet
-- no CORS strategy is documented for frontend integration
 
 Impact:
 
@@ -285,10 +309,6 @@ Priority: high
 
 Tasks:
 
-- implement category update endpoint
-- implement category delete endpoint
-- add pagination for transaction list and filter endpoints
-- add sorting options for transaction queries
 - standardize API error responses if needed
 - review response DTOs and decide whether `userId` should remain in responses
 
@@ -302,37 +322,73 @@ Acceptance criteria:
 - category CRUD is complete
 - large transaction lists do not require full-table style responses
 
-## Phase 3: Start The Frontend
+Current status:
+
+- in progress
+
+## Phase 3: Complete Core Frontend Flows
 
 Priority: high
 
-Suggested stack:
-
-- React
-- Vite
-- MUI
-- React Query
-
-Recommended first frontend slices:
-
-- app shell and routing
-- auth pages: register and login
-- token storage and authenticated API client
-- dashboard page
-- category selector
-- transaction list page
-- add transaction form
-
 Expected outcome:
 
-- the backend becomes visible as a usable product
-- the most important user flows can be exercised end-to-end
+- the frontend becomes functionally usable, not only navigable
+- a user can complete the main finance workflow from the UI
 
 Acceptance criteria:
 
-- a user can register, log in, create categories, create transactions, and view the dashboard from the UI
+- a user can register, log in, create categories, create transactions, edit transactions, delete transactions, and view the dashboard from the UI
 
-## Phase 4: Product Features
+Current status:
+
+- in progress
+- scaffold, auth shell, dashboard, category management, and transaction listing are implemented
+- next target should be transaction create/edit/delete UX
+
+## Phase 4: CI Foundation
+
+Priority: high
+
+Tasks:
+
+- add GitHub Actions workflow for backend tests
+- add GitHub Actions workflow for frontend build
+- enable dependency caching for Maven and npm
+- run workflows on push and pull request
+
+Expected outcome:
+
+- broken backend or frontend changes are blocked before merge
+- the repo becomes safer for iterative development
+
+Acceptance criteria:
+
+- backend workflow runs `mvn test`
+- frontend workflow runs `npm ci` and `npm run build`
+- pull requests show clear status checks
+
+## Phase 5: Containerization And Deployment Baseline
+
+Priority: medium
+
+Tasks:
+
+- add backend `Dockerfile`
+- decide whether frontend should also be containerized
+- extend compose setup if full-stack startup is desired
+- document runtime environment variables
+
+Expected outcome:
+
+- the app becomes easier to run consistently across environments
+- deployment preparation becomes simpler
+
+Acceptance criteria:
+
+- backend can run from a container with externalized configuration
+- frontend container exists only if there is a real deployment or startup need for it
+
+## Phase 6: Product Features
 
 Priority: medium
 
@@ -349,7 +405,7 @@ Expected outcome:
 
 - the application becomes useful beyond basic bookkeeping
 
-## Phase 5: Production Hardening
+## Phase 7: Production Hardening
 
 Priority: medium
 
@@ -375,7 +431,10 @@ If the goal is steady progress with minimal rework, the recommended implementati
 3. Implement category update/delete.
 4. Add pagination and sorting to transaction endpoints.
 5. Scaffold the React frontend and wire login/register.
-6. Build dashboard and transaction management screens.
+6. Implement transaction create/edit/delete flows in the frontend.
+7. Add GitHub Actions for backend tests and frontend build.
+8. Add backend containerization and decide whether frontend containerization is justified.
+9. Refine dashboard widgets and response cleanup details needed by the frontend.
 
 ## 8. Decision Notes
 
@@ -401,4 +460,4 @@ The backend has already passed the most important architectural threshold:
 - multi-user isolation works
 - business endpoints no longer trust client-supplied `userId`
 
-The most valuable next move is not adding random new features. The most valuable next move is stabilizing the current backend with automated tests, then building the frontend on top of that safer foundation.
+The backend is now stable enough to support UI work, and the frontend scaffold is in place. The next valuable move is to finish the main frontend transaction flow, then add CI, then containerize the runtime where it adds real value.

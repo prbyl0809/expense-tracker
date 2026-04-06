@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Literata:opsz,wght@7..72,600;7..72,700&display=swap");
+
+:root {
+  color-scheme: light dark;
+  font-family: "Public Sans", "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] body {
+  background: #111112;
+}
+
+:root[data-theme="light"] body {
+  background: #f3f6fa;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(79, 209, 197, 0.25);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 147, 173, 0.42);
+  border-radius: 999px;
+}

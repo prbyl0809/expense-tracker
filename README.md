@@ -1,6 +1,6 @@
 # Expense Tracker
 
-Spring Boot REST API for tracking income and expenses with JWT authentication, PostgreSQL persistence, and per-user data isolation.
+Fullstack expense tracker with a Spring Boot REST API backend and a React + Vite frontend scaffold for authenticated personal finance workflows.
 
 Detailed project status and next-step planning lives in [docs/project-status-and-roadmap.md](docs/project-status-and-roadmap.md).
 
@@ -17,6 +17,12 @@ Detailed project status and next-step planning lives in [docs/project-status-and
 - Springdoc OpenAPI
 - Maven
 - Docker Compose
+- React 19
+- TypeScript
+- Vite
+- MUI
+- TanStack Query
+- React Router
 
 ## Current Features
 
@@ -32,6 +38,7 @@ Detailed project status and next-step planning lives in [docs/project-status-and
 - Flyway database migrations on startup
 - local seed endpoint for sample data
 - health and Swagger endpoints
+- frontend app shell with JWT auth flow, theme toggle, dashboard, transactions, categories, and settings pages
 
 ## Current API Model
 
@@ -67,6 +74,16 @@ src/main/java/com/projects/expensetracker
 |- security
 |- transaction
 \- user
+
+frontend
+|- src/app
+|- src/components
+|- src/features
+|- src/hooks
+|- src/layouts
+|- src/pages
+|- src/theme
+\- src/types
 ```
 
 ## Prerequisites
@@ -74,6 +91,8 @@ src/main/java/com/projects/expensetracker
 - Java 21
 - Maven 3.9+
 - Docker and Docker Compose
+- Node.js 20+
+- npm 10+
 
 ## Configuration
 
@@ -101,6 +120,12 @@ jdbc:postgresql://localhost:${DB_PORT:5433}/${POSTGRES_DB:expensetracker}
 
 With the provided `.env.example`, PostgreSQL is available on `localhost:5432`.
 
+Frontend environment example:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080
+```
+
 ## Running Locally
 
 1. Copy `.env.example` to `.env` and adjust values if needed.
@@ -117,6 +142,16 @@ mvn spring-boot:run
 ```
 
 The API starts on `http://localhost:8080`.
+
+4. In a second terminal, start the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite app starts on `http://localhost:5173`.
 
 Flyway migrations run automatically during startup.
 
@@ -154,6 +189,8 @@ Both endpoints return a JWT token. Use it on protected endpoints:
 ```text
 Authorization: Bearer <token>
 ```
+
+The frontend stores the token locally and restores the authenticated user via `GET /api/users/me`.
 
 ## Main Endpoints
 
@@ -245,6 +282,106 @@ Example:
 GET /api/transactions?page=0&size=10&sort=amount,desc
 ```
 
+## Frontend Scope
+
+The current frontend scaffold includes:
+
+- auth pages for login and registration
+- protected app shell with responsive sidebar and top bar
+- persisted light and dark theme toggle
+- dashboard page wired to the current-month summary endpoint
+- transaction list page wired to backend pagination and filters
+- category management page wired to category CRUD
+- settings page for theme and session controls
+
+Current routes:
+
+- `/login`
+- `/register`
+- `/app/dashboard`
+- `/app/transactions`
+- `/app/categories`
+- `/app/settings`
+
+## Recommended Next Steps
+
+The most pragmatic order from the current state is:
+
+1. finish the core frontend transaction flow
+2. add CI with GitHub Actions
+3. containerize the backend and optionally the frontend
+4. tighten deployment and production configuration
+
+### 1. Frontend Features First
+
+Recommended next implementation targets:
+
+- transaction create form
+- transaction edit form
+- transaction delete action
+- transaction detail or inline edit UX
+- dashboard polish using real widgets and better empty/loading states
+- category UX refinements if needed
+
+Why this should come first:
+
+- the backend API is already strong enough to support these flows
+- this is the shortest path to a usable full product
+- CI and containerization are more valuable once the main user flow is in place
+
+### 2. GitHub Actions After Core UI Flows
+
+What you likely need first:
+
+- backend workflow: checkout, set up JDK 21, cache Maven, run `mvn test`
+- frontend workflow: set up Node 20, cache npm, run `npm ci`, run `npm run build`
+- triggers on push and pull request
+
+Nice additions later:
+
+- separate jobs for backend and frontend
+- required status checks on the main branch
+- formatting or lint checks when you introduce ESLint/Prettier
+
+Important note:
+
+- the backend test suite already uses H2, so CI does not need PostgreSQL just to run the tests
+
+### 3. Docker Containers
+
+Backend:
+
+- yes, worth doing
+- useful for consistent local startup and later deployment
+
+Frontend:
+
+- optional right now
+- useful if you want one `docker compose up` for the whole stack or plan container-based hosting
+
+Recommended order:
+
+- first add a backend `Dockerfile`
+- then add a frontend `Dockerfile` only if you want full-stack compose startup or container deployment
+
+### 4. Minimum CI/CD And Container Checklist
+
+For GitHub Actions:
+
+- `.github/workflows/backend.yml`
+- `.github/workflows/frontend.yml`
+- Java 21 setup
+- Node 20 setup
+- Maven cache
+- npm cache
+
+For containers:
+
+- `Dockerfile` for Spring Boot backend
+- optional `Dockerfile` for Vite frontend served by Nginx
+- compose file updates for app services, not just PostgreSQL
+- environment handling for JWT and API base URL
+
 ## API Docs And Health
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
@@ -323,4 +460,6 @@ Automated integration tests also cover:
 - JPA schema generation is set to `validate`, so the database schema must match the Flyway migrations.
 - The test suite runs against H2 in PostgreSQL compatibility mode with Flyway migrations enabled.
 - The backend API now includes category CRUD and paginated transaction list/filter endpoints.
-- The next major work items are response contract cleanup decisions and frontend implementation.
+- The frontend scaffold is now in place and the next major work items are transaction create/edit/delete flows, dashboard polish, and API contract cleanup decisions.
+- GitHub Actions should validate backend tests and frontend build before merge.
+- Backend containerization is worth doing before deployment work; frontend containerization is optional until you need unified compose startup or container hosting.
